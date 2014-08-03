@@ -61,16 +61,14 @@
 
     <distributionManagement>
         <repository>
-            <id>motech.nexus</id>
-            <name>MOTECH Releases Repository</name>
-            <url>http://nexus.motechproject.org/content/repositories/releases</url>
-            <uniqueVersion>false</uniqueVersion>
+            <id>tresata.releases</id>
+            <name>Repository Archiva Managed internal Repository</name>
+            <url>http://server01:8080/archiva/repository/internal</url>
         </repository>
         <snapshotRepository>
-            <id>motech.nexus</id>
-            <name>MOTECH Snapshots Repository</name>
-            <url>http://nexus.motechproject.org/content/repositories/snapshots</url>
-            <uniqueVersion>false</uniqueVersion>
+            <id>tresata.snapshots</id>
+            <name>Repository Archiva Managed snapshots Repository</name>
+            <url>http://server01:8080/archiva/repository/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -80,7 +78,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.2.1</version>
+                <version>2.3</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -90,6 +88,27 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.17</version>
+                <configuration>
+                    <includes>
+                        <include>**/*IT.java</include>
+                    </includes>
+                </configuration>
             </plugin>
 
         </plugins>
