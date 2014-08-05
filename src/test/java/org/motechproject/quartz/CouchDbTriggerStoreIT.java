@@ -1,5 +1,7 @@
 package org.motechproject.quartz;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,8 +40,11 @@ public class CouchDbTriggerStoreIT {
 
     @Before
     public void setup() throws Exception, CouchDbJobStoreException {
+        Logger.getLogger("org.motechproject").setLevel(Level.ALL);
         couchdbStore = new CouchDbStore();
-        couchdbStore.setProperties("/couchdb.properties");
+        couchdbStore.setAutoUpdateViewOnChange(true);
+        couchdbStore.setDbName("scheduler-store");
+        couchdbStore.initialize();
         couchdbStore.clearAllSchedulingData();
     }
 

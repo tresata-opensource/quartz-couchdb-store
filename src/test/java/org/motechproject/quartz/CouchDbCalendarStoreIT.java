@@ -18,6 +18,8 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import static ch.lambdaj.Lambda.extract;
 import static ch.lambdaj.Lambda.on;
 import static java.util.Arrays.asList;
@@ -35,8 +37,11 @@ public class CouchDbCalendarStoreIT {
 
     @Before
     public void setup() throws Exception, CouchDbJobStoreException {
+        Logger.getLogger("org.motechproject").setLevel(Level.ALL);
         couchdbStore = new CouchDbStore();
-        couchdbStore.setProperties("/couchdb.properties");
+        couchdbStore.setAutoUpdateViewOnChange(true);
+        couchdbStore.setDbName("scheduler-store");
+        couchdbStore.initialize();
         couchdbStore.clearAllSchedulingData();
     }
 

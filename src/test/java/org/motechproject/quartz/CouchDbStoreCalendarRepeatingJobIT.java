@@ -30,6 +30,7 @@ public class CouchDbStoreCalendarRepeatingJobIT {
 
     @Before
     public void setUp() throws Exception {
+        Logger.getLogger("org.motechproject").setLevel(Level.ALL);
         StdSchedulerFactory stdSchedulerFactory = new StdSchedulerFactory("quartz.properties");
         scheduler = stdSchedulerFactory.getScheduler();
     }
@@ -38,7 +39,6 @@ public class CouchDbStoreCalendarRepeatingJobIT {
     public void shouldScheduleAndFireCalendarIntervalTrigger() throws InterruptedException, SchedulerException {
         try {
             scheduler.clear();
-            Logger.getLogger("org.motechproject").setLevel(Level.ALL);
             scheduler.start();
 
             DateTime now = new DateTime();

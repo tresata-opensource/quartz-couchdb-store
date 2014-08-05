@@ -3,9 +3,11 @@ package org.motechproject.quartz;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ektorp.CouchDbConnector;
+import org.ektorp.http.HttpClient;
+import org.ektorp.http.StdHttpClient;
 import org.ektorp.impl.StdCouchDbConnector;
 import org.ektorp.impl.StdCouchDbInstance;
-import org.ektorp.spring.HttpClientFactoryBean;
+import org.ektorp.support.CouchDbRepositorySupport;
 import org.quartz.Calendar;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -52,6 +54,21 @@ public class CouchDbStore implements JobStore {
     private boolean schedulerRunning;
     private long misfireThreshold = 60000L;
 
+    // settings for HttpClient
+    private String host = "localhost";
+    private int port = 5984;
+    private int maxConnections = 20;
+    private int connectionTimeout = 1000;
+    private int socketTimeout = 10000;
+    private boolean autoUpdateViewOnChange = false;
+    private String username;
+    private String password;
+    private boolean cleanupIdleConnections = true;
+    private boolean enableSSL = false;
+    private boolean relaxedSSLSettings = false;
+    private boolean useExpectContinue = true;
+    private String dbName = "scheduler";
+
     public CouchDbStore() {
     }
 
@@ -67,56 +84,101 @@ public class CouchDbStore implements JobStore {
         return calendarStore;
     }
 
+    public void setHost(String host) { 
+        this.host = host; 
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public void setMaxConnections(int maxConnections) {
+        this.maxConnections = maxConnections;
+    }
+
+    public void setConnectionTimeout(int connectionTimeout) {
+        this.connectionTimeout = connectionTimeout;
+    }
+
+    public void setSocketTimeout(int socketTimeout) {
+        this.socketTimeout = socketTimeout;
+    }
+
+    public void setAutoUpdateViewOnChange(boolean autoUpdateViewOnChange) {
+        this.autoUpdateViewOnChange = autoUpdateViewOnChange;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setCleanupIdleConnections(boolean cleanupIdleConnections) {
+        this.cleanupIdleConnections = cleanupIdleConnections;
+    }
+
+    public void setEnableSSL(boolean enableSSL) {
+        this.enableSSL = enableSSL;
+    }
+
+    public void setRelaxedSSLSettings(boolean relaxedSSLSettings) {
+        this.relaxedSSLSettings = relaxedSSLSettings;
+    }
+
+    public void setUseExpectContinue(boolean useExpectContinue) {
+        this.useExpectContinue = useExpectContinue;
+    }
+
+    public void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
+    
+    public void initialize() throws SchedulerConfigException {
+        if(logger.isInfoEnabled()) {
+            logger.info("Starting couchDb connector on {}:{}...", new Object[]{host,port});
+            logger.info("maxConnections: {}", maxConnections);
+            logger.info("connectionTimeout: {}", connectionTimeout);
+            logger.info("socketTimeout: {}", socketTimeout);
+            logger.info("username: {}", username);
+            logger.info("password provided: {}", password != null);
+            logger.info("cleanupIdleConnections: {}", cleanupIdleConnections);
+            logger.info("useExpectContinue: {}", useExpectContinue);
+            logger.info("enableSSL: {}", enableSSL);
+            logger.info("relaxedSSLSettings: {}", relaxedSSLSettings);
+            logger.info("autoUpdateViewOnChange: {}", autoUpdateViewOnChange);
+            logger.info("dbName: {}", dbName);
+        }
+
+        if (autoUpdateViewOnChange)
+            System.setProperty(CouchDbRepositorySupport.AUTO_UPDATE_VIEW_ON_CHANGE, "true");
+        
+        HttpClient client = new StdHttpClient.Builder()
+            .host(host)
+            .port(port)
+            .maxConnections(maxConnections)
+            .connectionTimeout(connectionTimeout)
+            .socketTimeout(socketTimeout)
+            .username(username)
+            .password(password)
+            .cleanupIdleConnections(cleanupIdleConnections)
+            .useExpectContinue(useExpectContinue)
+            .enableSSL(enableSSL)
+            .relaxedSSLSettings(relaxedSSLSettings)
+            .caching(false)
+            .build();
+        CouchDbConnector connector = new StdCouchDbConnector(dbName, new StdCouchDbInstance(client));
+        this.jobStore = new CouchDbJobStore(connector);
+        this.triggerStore = new CouchDbTriggerStore(connector);
+        this.calendarStore = new CouchDbCalendarStore(connector);
+    }
+
     @Override
     public void initialize(ClassLoadHelper loadHelper, SchedulerSignaler signaler) throws SchedulerConfigException {
+        initialize();
     }
-
-    public void setProperties(String propertiesFile) throws IOException, CouchDbJobStoreException {
-        Properties properties = new Properties();
-        properties.load(ClassLoader.class.getResourceAsStream(propertiesFile));
-
-        HttpClientFactoryBean httpClientFactoryBean = new HttpClientFactoryBean();
-        httpClientFactoryBean.setProperties(extractHttpClientProperties(properties));
-        httpClientFactoryBean.setCaching(false);
-        try {
-            httpClientFactoryBean.afterPropertiesSet();
-
-            String dbNameGeneratorClass = properties.getProperty("db.nameGenerator");
-            String dbName = properties.getProperty("db.name");
-
-            DatabaseNameProvider dbNameGenerator;
-            if (dbNameGeneratorClass == null || dbNameGeneratorClass.equals("")) {
-                dbNameGenerator = new DefaultDatabaseNameProvider(dbName);
-            } else {
-                Class<?> aClass = Class.forName(dbNameGeneratorClass);
-                dbNameGenerator = (DatabaseNameProvider) aClass.newInstance();
-            }
-
-            String databaseName = dbNameGenerator.getDatabaseName();
-            if (databaseName == null || databaseName.equals("")) {
-                databaseName = "scheduler";
-            }
-            CouchDbConnector connector = new StdCouchDbConnector(databaseName, new StdCouchDbInstance(httpClientFactoryBean.getObject()));
-            this.jobStore = new CouchDbJobStore(connector);
-            this.triggerStore = new CouchDbTriggerStore(connector);
-            this.calendarStore = new CouchDbCalendarStore(connector);
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            throw new CouchDbJobStoreException(e);
-        }
-    }
-
-    private Properties extractHttpClientProperties(Properties properties) {
-        Properties httpClientProperties = new Properties();
-        for (Object k : properties.keySet()) {
-            String key = (String) k;
-            if (!key.startsWith("db.")) {
-                httpClientProperties.put(key, properties.get(key));
-            }
-        }
-        return httpClientProperties;
-    }
-
 
     @Override
     public void schedulerStarted() throws SchedulerException {
