@@ -32,6 +32,18 @@ public class CouchDbTriggerStore extends CouchDbRepositorySupport<CouchDbTrigger
     protected CouchDbTriggerStore(CouchDbConnector db) {
         super(CouchDbTrigger.class, db);
         initStandardDesignDocument();
+
+        // check all triggers on startup
+        // see https://github.com/motech/quartz-couchdb-store/issues/1
+        // After normal program interrupt or crash, triggers in "ACQUIRED" state are no longer fired when restarting.
+        // Existing triggers states should be set to "WAITING" on init
+        for (CouchDbTrigger trigger: getAll()) {
+            if (trigger.getState() == CouchDbTriggerState.ACQUIRED) {
+                logger.warn(String.format("Document ID : %s; Revision: %s; fixing state %s -> WAITING", trigger.getId(), trigger.getRevision(), trigger.getState()));
+                trigger.setState(CouchDbTriggerState.WAITING);
+                db.update(trigger);
+            }
+        }
     }
 
     // TODO: check conflict?
