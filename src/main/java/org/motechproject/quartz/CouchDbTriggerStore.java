@@ -1,6 +1,7 @@
 package org.motechproject.quartz;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ektorp.ComplexKey;
 import org.ektorp.CouchDbConnector;
 import org.ektorp.DocumentNotFoundException;
@@ -26,7 +27,7 @@ import static ch.lambdaj.Lambda.on;
 
 public class CouchDbTriggerStore extends CouchDbRepositorySupport<CouchDbTrigger> {
 
-    private Logger logger = Logger.getLogger(CouchDbTriggerStore.class);
+    private Logger logger = LoggerFactory.getLogger(CouchDbTriggerStore.class);
 
     protected CouchDbTriggerStore(CouchDbConnector db) {
         super(CouchDbTrigger.class, db);
@@ -187,7 +188,7 @@ public class CouchDbTriggerStore extends CouchDbRepositorySupport<CouchDbTrigger
     List<CouchDbTrigger> triggersFired(List<CouchDbTrigger> triggers, Map<String, Calendar> calendarMap) throws JobPersistenceException {
         if (logger.isInfoEnabled()) {
             logger.info("triggersFired: Releasing triggers " + triggers.size());
-            logger.info(triggers);
+            logger.info(triggers.toString());
         }
         for (CouchDbTrigger trigger : triggers) {
             trigger.triggered(calendarMap.get(trigger.getKey()));

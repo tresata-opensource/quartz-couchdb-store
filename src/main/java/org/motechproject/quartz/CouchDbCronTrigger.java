@@ -1,6 +1,7 @@
 package org.motechproject.quartz;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.ektorp.support.TypeDiscriminator;
@@ -17,7 +18,7 @@ import java.util.TimeZone;
 @TypeDiscriminator("CouchDbTrigger")
 public class CouchDbCronTrigger extends CouchDbTrigger<CronTriggerImpl> {
 
-    private Logger log = Logger.getLogger(CouchDbCronTrigger.class);
+    private Logger log = LoggerFactory.getLogger(CouchDbCronTrigger.class);
 
     private CouchDbCronTrigger() {
         this(new CronTriggerImpl());

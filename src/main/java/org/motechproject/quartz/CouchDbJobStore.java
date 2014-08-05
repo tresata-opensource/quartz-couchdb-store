@@ -1,6 +1,7 @@
 package org.motechproject.quartz;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ektorp.ComplexKey;
 import org.ektorp.CouchDbConnector;
 import org.ektorp.DocumentNotFoundException;
@@ -20,7 +21,7 @@ import static ch.lambdaj.Lambda.extract;
 import static ch.lambdaj.Lambda.on;
 
 public class CouchDbJobStore extends CouchDbRepositorySupport<CouchDbJobDetail> {
-    private Logger logger = Logger.getLogger(CouchDbJobStore.class);
+    private Logger logger = LoggerFactory.getLogger(CouchDbJobStore.class);
 
     protected CouchDbJobStore(CouchDbConnector db) {
         super(CouchDbJobDetail.class, db);

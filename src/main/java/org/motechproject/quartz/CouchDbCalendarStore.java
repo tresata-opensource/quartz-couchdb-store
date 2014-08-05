@@ -1,6 +1,7 @@
 package org.motechproject.quartz;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ektorp.CouchDbConnector;
 import org.ektorp.ViewResult;
 import org.ektorp.support.CouchDbRepositorySupport;
@@ -14,7 +15,7 @@ import java.util.List;
 
 public class CouchDbCalendarStore extends CouchDbRepositorySupport {
 
-    private Logger logger = Logger.getLogger(CouchDbCalendarStore.class);
+    private Logger logger = LoggerFactory.getLogger(CouchDbCalendarStore.class);
 
     protected CouchDbCalendarStore(CouchDbConnector db) {
         super(CouchDbCalendar.class, db);

@@ -1,6 +1,7 @@
 package org.motechproject.quartz;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ektorp.CouchDbConnector;
 import org.ektorp.impl.StdCouchDbConnector;
 import org.ektorp.impl.StdCouchDbInstance;
@@ -40,7 +41,7 @@ import java.util.Set;
 
 public class CouchDbStore implements JobStore {
 
-    private Logger logger = Logger.getLogger(CouchDbStore.class);
+    private Logger logger = LoggerFactory.getLogger(CouchDbStore.class);
     private String instanceId;
     private String instanceName;
 
@@ -170,9 +171,9 @@ public class CouchDbStore implements JobStore {
     }
 
     @Override
-    public void storeJobsAndTriggers(Map<JobDetail, List<Trigger>> triggersAndJobs, boolean replace) throws JobPersistenceException {
+    public void storeJobsAndTriggers(Map<JobDetail, Set<? extends Trigger>> triggersAndJobs, boolean replace) throws JobPersistenceException {
         if (!replace) {
-            for (Map.Entry<JobDetail, List<Trigger>> e : triggersAndJobs.entrySet()) {
+            for (Map.Entry<JobDetail, Set<? extends Trigger>> e : triggersAndJobs.entrySet()) {
                 if (checkExists(e.getKey().getKey())) {
                     throw new ObjectAlreadyExistsException(e.getKey());
                 }
@@ -183,7 +184,7 @@ public class CouchDbStore implements JobStore {
                 }
             }
         }
-        for (Map.Entry<JobDetail, List<Trigger>> e : triggersAndJobs.entrySet()) {
+        for (Map.Entry<JobDetail, Set<? extends Trigger>> e : triggersAndJobs.entrySet()) {
             storeJob(e.getKey(), true);
             for (Trigger trigger : e.getValue()) {
                 storeTrigger((OperableTrigger) trigger, true);
@@ -464,7 +465,7 @@ public class CouchDbStore implements JobStore {
         triggerStore.updateTriggers(couchdbTriggers);
         if (logger.isInfoEnabled()) {
             logger.info(operableTriggers.size() + " triggers acquired.");
-            logger.trace(operableTriggers);
+            logger.trace(operableTriggers.toString());
         }
         return operableTriggers;
     }
@@ -478,7 +479,7 @@ public class CouchDbStore implements JobStore {
     public List<TriggerFiredResult> triggersFired(List<OperableTrigger> triggers) throws JobPersistenceException {
         if (logger.isInfoEnabled()) {
             logger.info("Triggers fired " + triggers.size());
-            logger.trace(triggers);
+            logger.trace(triggers.toString());
         }
 
         List<CouchDbTrigger> couchdbTriggers = fetchCouchDbTriggers(triggers);
