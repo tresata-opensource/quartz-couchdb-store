@@ -294,7 +294,7 @@ public class CouchDbStore implements JobStore {
     public boolean removeTriggers(List<TriggerKey> triggerKeys) throws JobPersistenceException {
         boolean allFound = true;
         for (TriggerKey key : triggerKeys) {
-            allFound = triggerStore.removeTrigger(key) && allFound;
+            allFound = removeTrigger(key) && allFound;
         }
         return allFound;
     }
@@ -620,7 +620,7 @@ public class CouchDbStore implements JobStore {
     @Override
     public void triggeredJobComplete(OperableTrigger trigger, JobDetail jobDetail, Trigger.CompletedExecutionInstruction triggerInstCode) throws JobPersistenceException {
         if (trigger.getNextFireTime() == null) {
-            triggerStore.removeTrigger(trigger.getKey());
+            removeTrigger(trigger.getKey());
         }
     }
 
