@@ -506,8 +506,8 @@ public class CouchDbStore implements JobStore {
 
     @Override
     public List<OperableTrigger> acquireNextTriggers(long noLaterThan, int maxCount, long timeWindow) throws JobPersistenceException {
-        if (logger.isInfoEnabled()) {
-            logger.info(String.format("acquireNextTriggers: [%s], maxCount [%s], timeWindow [%s]", noLaterThan, maxCount, timeWindow));
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("acquireNextTriggers: [%s], maxCount [%s], timeWindow [%s]", noLaterThan, maxCount, timeWindow));
         }
         List<CouchDbTrigger> couchdbTriggers = triggerStore.acquireNextTriggers(noLaterThan, maxCount, timeWindow);
 
@@ -518,8 +518,8 @@ public class CouchDbStore implements JobStore {
             operableTriggers.add(couchdbTrigger.getTrigger());
         }
         triggerStore.updateTriggers(couchdbTriggers);
-        if (logger.isInfoEnabled()) {
-            logger.info(operableTriggers.size() + " triggers acquired.");
+        if (logger.isDebugEnabled()) {
+            logger.debug(operableTriggers.size() + " triggers acquired.");
             logger.trace(operableTriggers.toString());
         }
         return operableTriggers;

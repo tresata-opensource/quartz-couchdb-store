@@ -179,7 +179,7 @@ public class CouchDbTriggerStore extends CouchDbRepositorySupport<CouchDbTrigger
 
     @View(name = "by_nextFireTime", map = "function(doc) { if (doc.type === 'CouchDbTrigger' && doc.state === 'WAITING') emit(doc.next_fire_time, doc._id); }")
     public List<CouchDbTrigger> acquireNextTriggers(long noLaterThan, int maxCount, long timeWindow) throws JobPersistenceException {
-        logger.info("by_nextFireTime");
+        logger.debug("by_nextFireTime");
         return db.queryView(createQuery("by_nextFireTime").startKey(new Date(0)).endKey(new Date(noLaterThan + timeWindow)).limit(maxCount).includeDocs(true), CouchDbTrigger.class);
     }
 
