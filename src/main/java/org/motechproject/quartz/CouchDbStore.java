@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.net.MalformedURLException;
 
 public class CouchDbStore implements JobStore {
 
@@ -55,8 +56,7 @@ public class CouchDbStore implements JobStore {
     private long misfireThreshold = 60000L;
 
     // settings for HttpClient
-    private String host = "localhost";
-    private int port = 5984;
+    private String url = "http://localhost:5984";
     private int maxConnections = 20;
     private int connectionTimeout = 1000;
     private int socketTimeout = 10000;
@@ -64,7 +64,6 @@ public class CouchDbStore implements JobStore {
     private String username;
     private String password;
     private boolean cleanupIdleConnections = true;
-    private boolean enableSSL = false;
     private boolean relaxedSSLSettings = false;
     private boolean useExpectContinue = true;
     private String dbName = "scheduler";
@@ -84,12 +83,8 @@ public class CouchDbStore implements JobStore {
         return calendarStore;
     }
 
-    public void setHost(String host) { 
-        this.host = host; 
-    }
-
-    public void setPort(int port) {
-        this.port = port;
+    public void setUrl(String url) { 
+        this.url = url; 
     }
 
     public void setMaxConnections(int maxConnections) {
@@ -120,10 +115,6 @@ public class CouchDbStore implements JobStore {
         this.cleanupIdleConnections = cleanupIdleConnections;
     }
 
-    public void setEnableSSL(boolean enableSSL) {
-        this.enableSSL = enableSSL;
-    }
-
     public void setRelaxedSSLSettings(boolean relaxedSSLSettings) {
         this.relaxedSSLSettings = relaxedSSLSettings;
     }
@@ -138,7 +129,7 @@ public class CouchDbStore implements JobStore {
     
     public void initialize() throws SchedulerConfigException {
         if(logger.isInfoEnabled()) {
-            logger.info("Starting couchDb connector on {}:{}...", new Object[]{host,port});
+            logger.info("Starting couchDb connector on {}...", url);
             logger.info("maxConnections: {}", maxConnections);
             logger.info("connectionTimeout: {}", connectionTimeout);
             logger.info("socketTimeout: {}", socketTimeout);
@@ -146,7 +137,6 @@ public class CouchDbStore implements JobStore {
             logger.info("password provided: {}", password != null);
             logger.info("cleanupIdleConnections: {}", cleanupIdleConnections);
             logger.info("useExpectContinue: {}", useExpectContinue);
-            logger.info("enableSSL: {}", enableSSL);
             logger.info("relaxedSSLSettings: {}", relaxedSSLSettings);
             logger.info("autoUpdateViewOnChange: {}", autoUpdateViewOnChange);
             logger.info("dbName: {}", dbName);
@@ -155,20 +145,23 @@ public class CouchDbStore implements JobStore {
         if (autoUpdateViewOnChange)
             System.setProperty(CouchDbRepositorySupport.AUTO_UPDATE_VIEW_ON_CHANGE, "true");
         
-        HttpClient client = new StdHttpClient.Builder()
-            .host(host)
-            .port(port)
-            .maxConnections(maxConnections)
-            .connectionTimeout(connectionTimeout)
-            .socketTimeout(socketTimeout)
-            .username(username)
-            .password(password)
-            .cleanupIdleConnections(cleanupIdleConnections)
-            .useExpectContinue(useExpectContinue)
-            .enableSSL(enableSSL)
-            .relaxedSSLSettings(relaxedSSLSettings)
-            .caching(false)
-            .build();
+        HttpClient client;
+        try {
+            client = new StdHttpClient.Builder()
+                .url(url)
+                .maxConnections(maxConnections)
+                .connectionTimeout(connectionTimeout)
+                .socketTimeout(socketTimeout)
+                .username(username)
+                .password(password)
+                .cleanupIdleConnections(cleanupIdleConnections)
+                .useExpectContinue(useExpectContinue)
+                .relaxedSSLSettings(relaxedSSLSettings)
+                .caching(false)
+                .build();
+        } catch (MalformedURLException e) {
+            throw new SchedulerConfigException("invalid url", e);
+        }
         CouchDbConnector connector = new StdCouchDbConnector(dbName, new StdCouchDbInstance(client));
         this.jobStore = new CouchDbJobStore(connector);
         this.triggerStore = new CouchDbTriggerStore(connector);
