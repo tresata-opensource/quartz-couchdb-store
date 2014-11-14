@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.net.URL;
 import java.net.MalformedURLException;
 
 public class CouchDbStore implements JobStore {
@@ -83,8 +84,8 @@ public class CouchDbStore implements JobStore {
         return calendarStore;
     }
 
-    public void setUrl(String url) { 
-        this.url = url; 
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     public void setMaxConnections(int maxConnections) {
@@ -128,6 +129,21 @@ public class CouchDbStore implements JobStore {
     }
     
     public void initialize() throws SchedulerConfigException {
+        if (url != null && username == null && password == null) {
+            try {
+                URL url1 = new URL(url);
+                String userInfo = url1.getUserInfo();
+                if (userInfo != null) {
+                    url = new URL(url1.getProtocol(), url1.getHost(), url1.getPort(), url1.getFile()).toString();
+                    String[] userPass = userInfo.split(":", 2);
+                    username = userPass[0];
+                    password = userPass[1];
+                }
+            } catch (MalformedURLException e) {
+                throw new SchedulerConfigException("invalid url", e);
+            }
+        }
+        
         if(logger.isInfoEnabled()) {
             logger.info("Starting couchDb connector on {}...", url);
             logger.info("maxConnections: {}", maxConnections);
